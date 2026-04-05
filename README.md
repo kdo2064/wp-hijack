@@ -1,188 +1,131 @@
-﻿<p align="center">
-  <img src="assets/logo.png" alt="WP-Hijack" width="520"/>
+<p align="center">
+  <img src="assets/logo.png" alt="WP-Hijack" width="480" />
 </p>
 
 <p align="center">
-  <sup>Advanced WordPress Vulnerability Scanner &amp; AI-Powered Exploitation Framework</sup>
+  <i>Advanced WordPress Vulnerability Scanner &amp; AI-Powered Exploitation Framework</i>
 </p>
 
 <p align="center">
-  <!-- GitHub live stats -->
-  <a href="https://github.com/kdo2064/wp-Hijack/stargazers">
-    <img src="https://img.shields.io/github/stars/kdo2064/wp-Hijack?style=for-the-badge&logo=github&color=FFD700&labelColor=0d1117" alt="Stars"/>
-  </a>
-  <a href="https://github.com/kdo2064/wp-Hijack/network/members">
-    <img src="https://img.shields.io/github/forks/kdo2064/wp-Hijack?style=for-the-badge&logo=github&color=60A5FA&labelColor=0d1117" alt="Forks"/>
-  </a>
-  <a href="https://github.com/kdo2064/wp-Hijack/issues">
-    <img src="https://img.shields.io/github/issues/kdo2064/wp-Hijack?style=for-the-badge&logo=github&color=F87171&labelColor=0d1117" alt="Issues"/>
-  </a>
-  <a href="https://github.com/kdo2064/wp-Hijack/pulls">
-    <img src="https://img.shields.io/github/issues-pr/kdo2064/wp-Hijack?style=for-the-badge&logo=github&color=34D399&labelColor=0d1117" alt="Pull Requests"/>
-  </a>
-</p>
-
-<p align="center">
-  <!-- Tech badges -->
-  <img src="https://img.shields.io/badge/version-1.0.0-FF4444?style=for-the-badge&logo=github" alt="Version"/>
-  <img src="https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
-  <img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge" alt="MIT License"/>
+  <img src="https://img.shields.io/badge/Python-3.11%2B-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
+  <img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge" alt="MIT"/>
+  <img src="https://img.shields.io/badge/AI-Ollama%20%7C%20OpenAI%20%7C%20Anthropic%20%7C%20Gemini-8B5CF6?style=for-the-badge&logo=openai&logoColor=white" alt="AI"/>
   <img src="https://img.shields.io/badge/Platform-Win%20%7C%20Linux%20%7C%20macOS-6B7280?style=for-the-badge" alt="Platform"/>
+  <a href="https://hits.seeyoufarm.com">
+    <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fkdo2064%2Fwp-Hijack&count_bg=%23FF4444&title_bg=%230D1117&icon=github&icon_color=%23FFFFFF&title=Visitors&edge_flat=false" alt="Visitors"/>
+  </a>
 </p>
 
 <p align="center">
-  <!-- AI providers badge -->
-  <img src="https://img.shields.io/badge/AI-Ollama%20%7C%20OpenAI%20%7C%20Anthropic%20%7C%20Gemini-8B5CF6?style=for-the-badge&logo=openai&logoColor=white" alt="AI Providers"/>
-  <!-- Visitor counter -->
-  <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fkdo2064%2Fwp-Hijack&count_bg=%23FF4444&title_bg=%230D1117&icon=github&icon_color=%23FFFFFF&title=Visitors&edge_flat=false" alt="Visitors"/>
-</p>
-
-<p align="center">
-  <b>Built by <a href="https://github.com/kdo2064">KDO || Xpert Exploit</a></b>
+  by <a href="https://github.com/kdo2064"><b>KDO / Xpert Exploit</b></a>
   &nbsp;·&nbsp;
-  <a href="https://github.com/kdo2064/wp-Hijack">⭐ Star this project</a>
+  <a href="https://github.com/kdo2064/wp-Hijack/issues/new">Report a Bug</a>
   &nbsp;·&nbsp;
-  <a href="https://github.com/kdo2064/wp-Hijack/issues/new">🐛 Report a Bug</a>
-  &nbsp;·&nbsp;
-  <a href="https://github.com/kdo2064/wp-Hijack/issues/new">✨ Request a Feature</a>
+  <a href="https://github.com/kdo2064/wp-Hijack/issues/new">Request a Feature</a>
 </p>
 
 ---
 
-## 📌 Table of Contents
+## Table of Contents
 
-- [What is WP-Hijack?](#-what-is-wp-hijack)
-- [Features](#-feature-comparison)
-- [Installation](#️-installation)
-- [Quick Start](#-quick-start)
-- [CLI Reference](#-full-cli-reference)
-- [Configuration](#️-configuration-configjson)
-- [10-Phase Pipeline](#-10-phase-scan-pipeline)
-- [Reports](#-reports)
-- [Project Structure](#️-project-structure)
-- [Vulnerability Database](#️-vulnerability-database)
-- [Usage Examples](#-usage-examples)
-- [Roadmap](#-roadmap)
-- [Contributing](#-contributing)
-- [Changelog](#-changelog)
-- [Legal Disclaimer](#️-legal-disclaimer)
-- [Author](#-author)
+- [What is WP-Hijack?](#what-is-wp-hijack)
+- [Highlights](#highlights)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Commands & Flags](#commands--flags)
+- [Configuration](#configuration)
+- [Output & Reports](#output--reports)
+- [Project Layout](#project-layout)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [Legal Disclaimer](#legal-disclaimer)
+- [Author](#author)
 
 ---
 
-## ⚡ What is WP-Hijack?
+## What is WP-Hijack?
 
 **WP-Hijack** is a full-featured, open-source WordPress security scanner built for
-penetration testers, bug bounty hunters, and red teams. It goes far beyond simple
-version detection — running a **10-phase async pipeline** from passive recon all
-the way to AI-generated exploit code, with zero required API keys (supports fully
-local Ollama inference).
+penetration testers, bug bounty hunters, and red teams. It runs a **10-phase async
+pipeline** — from passive recon to AI-generated exploit code — with **zero required
+API keys** (works 100% offline with Ollama).
 
-```
-wp-hijack scan https://target.com --yes-ai
-```
-
-> **Why it's different from WPScan:**
-> WP-Hijack adds a full **DETECT → CONFIRM → AI EXPLOIT** chain that WPScan lacks.
-> Every detected vulnerability is confirmed with an active HTTP proof-of-exploit
-> before AI generates a working Python PoC, cURL command, and business-risk summary.
+> **DETECT → CONFIRM → AI EXPLOIT**
+>
+> Every vulnerability is actively confirmed with an HTTP proof-of-exploit before AI
+> generates a working Python PoC, cURL command, and a business-impact summary.
 
 ---
 
-## 🔥 Feature Comparison
+## Highlights
 
-| Capability | WP-Hijack | WPScan |
-|---|:---:|:---:|
-| WordPress version detection (7 signals) | ✅ | ✅ |
-| REST API discovery (`/wp-json/`) | ✅ | ✅ |
-| Plugin enumeration — 53-slug wordlist | ✅ | ✅ |
-| Theme enumeration — 23-slug wordlist | ✅ | ✅ |
-| User enumeration (4 methods) | ✅ | ✅ |
-| Sensitive file exposure (70+ paths) | ✅ | ✅ |
-| XML-RPC abuse testing | ✅ | ✅ |
-| REST API security checks | ✅ | ✅ |
-| Login security & username oracle | ✅ | ✅ |
-| Safe SQLi / XSS probes | ✅ | ❌ |
-| WAF detection & bypass hints | ✅ | Limited |
-| WPVulnerability.net live API | ✅ | ❌ |
-| Local SQLite vuln DB (offline) | ✅ | ❌ |
-| **DETECT → CONFIRM → AI EXPLOIT pipeline** | ✅ | ❌ |
-| AI-generated Python PoC + cURL exploit | ✅ | ❌ |
-| AI executive summary + risk scoring | ✅ | ❌ |
-| AI attack chain narrative | ✅ | ❌ |
-| AI false-positive filter | ✅ | ❌ |
-| Dark-mode HTML report + PDF | ✅ | ❌ |
-| Multi-AI (OpenAI / Anthropic / Gemini / Ollama) | ✅ | ❌ |
-| Joomla / Drupal CMS detection | ✅ | ❌ |
-| Exponential-backoff HTTP retry | ✅ | ❌ |
-| **Zero required API keys (local Ollama)** | ✅ | ❌ |
+| Area | What it does |
+|---|---|
+| **CMS Detection** | 7-signal WordPress fingerprinting incl. `/wp-json/` REST API & `Link: api.w.org` header |
+| **Enumeration** | 53-slug plugin wordlist + 23-slug theme wordlist — works on hardened / CDN-fronted sites |
+| **User Discovery** | 4 methods: REST API, author archives (URL + body), login oracle, XML-RPC multicall |
+| **Active Tests** | XML-RPC abuse · REST API checks · login oracle · 70+ sensitive file paths · safe SQLi/XSS |
+| **VulnDB** | Bundled SQLite DB (offline) + live WPVulnerability.net API — no API key required |
+| **AI Workflow** | Ollama (local/free), OpenAI, Anthropic, Gemini — summaries, exploit drafting, FP filter, chat |
+| **Reporting** | Dark-mode HTML · PDF · JSON · Markdown — all from one scan |
+| **Resilience** | Exponential-backoff HTTP retry · URL typo detection · WAF evasion hints |
 
 ---
 
-## 🛠️ Installation
-
-**Requirements:** Python 3.11+ &nbsp;·&nbsp; Git &nbsp;·&nbsp; pip
-
-### From GitHub (recommended)
-
-```bash
-git clone https://github.com/kdo2064/wp-Hijack
-cd wp-Hijack
-pip install -e .
-wp-hijack --version
-```
-
-### Inside a virtual environment (clean install)
+## Installation
 
 ```bash
 git clone https://github.com/kdo2064/wp-Hijack
 cd wp-Hijack
 python -m venv .venv
+```
 
+```bash
 # Windows
 .venv\Scripts\activate
 
 # Linux / macOS
 source .venv/bin/activate
+```
 
+```bash
 pip install -e .
 wp-hijack --version
 ```
 
-### Run 100% offline with Ollama (no API key needed)
+### Use Local AI — No API Key Needed
 
 ```bash
-# 1. Install Ollama from https://ollama.com
-ollama pull llama3          # or any model you prefer
-ollama serve                 # starts the local AI server
+# Install Ollama from https://ollama.com, then:
+ollama pull llama3
+ollama serve
 
-# 2. Set provider to ollama in config.json (already the default)
-# 3. Scan with AI
-wp-hijack scan https://target.com --yes-ai
+wp-hijack scan https://target.tld --yes-ai
 ```
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
+
+<p align="center">
+  <img src="https://media.giphy.com/media/RbDKaczqWovIugyJmW/giphy.gif" width="420" alt="scan in action"/>
+</p>
 
 ```bash
 # Basic scan
-wp-hijack scan https://target.com
+wp-hijack scan https://target.tld
 
-# Scan + auto AI analysis
-wp-hijack scan https://target.com --yes-ai
+# Scan + auto AI analysis (no prompt)
+wp-hijack scan https://target.tld --yes-ai
 
-# Deep scan — plugins/themes/SQLi/XSS + verbose output
-wp-hijack scan https://target.com --cautious --verbose
+# Deep scan — cautious checks + verbose terminal output
+wp-hijack scan https://target.tld --cautious --verbose
 
-# Bulk scan from file
-wp-hijack scan --file targets.txt --output ./reports
+# Bulk scan from a file (one URL per line)
+wp-hijack scan --file targets.txt --output reports
 
-# Scan without AI (fastest mode)
-wp-hijack scan https://target.com --no-ai
-
-# Interactive AI chat session after scan
-wp-hijack scan https://target.com --chat
+# Interactive AI chat after scan
+wp-hijack scan https://target.tld --chat
 
 # Update vulnerability database
 wp-hijack update-db
@@ -190,37 +133,43 @@ wp-hijack update-db
 
 ---
 
-## 📋 Full CLI Reference
+## Commands & Flags
 
-```
-wp-hijack scan [TARGET] [OPTIONS]
+### Commands
 
-Arguments:
-  TARGET                  Target URL (e.g. https://example.com)
+| Command | Purpose |
+|---|---|
+| `wp-hijack scan <target>` | Scan a single target |
+| `wp-hijack scan --file targets.txt` | Bulk scan from file |
+| `wp-hijack update-db` | Refresh local vuln DB from NVD feeds |
+| `wp-hijack model-list` | List available Ollama models |
+| `wp-hijack model-select` | Choose and save active Ollama model |
+| `wp-hijack show-config` | Print resolved config (secrets masked) |
+| `wp-hijack chat-report report.json` | AI chat against an existing report |
 
-Options:
-  -f, --file      PATH    Text file — one URL per line (bulk mode)
-  -c, --config    PATH    Path to config.json
-  -o, --output    PATH    Output directory for reports  [default: ./reports]
-  -y, --yes-ai            Auto-run AI analysis, skip interactive prompt
-      --no-ai             Disable all AI modules for this run
-      --no-ai-prompt      Run AI in Phase 8 but skip the end-of-scan prompt
-      --no-confirm        Skip active HTTP confirmation tests
-      --cautious          Enable CAUTIOUS-level confirmation tests (slower, more thorough)
-  -m, --markdown          Write Markdown report alongside HTML + JSON
-      --chat              Start interactive AI chat session after scan
-      --model     TEXT    Override AI model for this run (e.g. gpt-4o)
-      --provider  TEXT    Override AI provider for this run
-      --verbose           Print detailed per-finding cards
+### Scan Flags
 
-wp-hijack update-db              Update the local vulnerability database
-wp-hijack update-db --years 2025 Update specific NVD year feeds
-wp-hijack show-config            Display the current resolved configuration
+```text
+--file           Bulk mode from a text file
+--config         Use a custom config file
+--output         Change the report output directory
+--no-ai          Disable AI for this run
+--no-confirm     Skip active confirmation checks
+--cautious       Slower, more thorough confirmations
+--markdown       Also write a Markdown report
+--chat           Start interactive AI chat after the scan
+--model          Override AI model for one run
+--provider       Override AI provider for one run
+--verbose        Show detailed finding cards in the terminal
+--yes-ai         Auto-run AI analysis (skip prompt)
+--no-ai-prompt   Do not ask for AI analysis after scan
 ```
 
 ---
 
-## ⚙️ Configuration (`config.json`)
+## Configuration
+
+Default behavior is controlled through [`config.json`](config.json):
 
 ```json
 {
@@ -228,308 +177,159 @@ wp-hijack show-config            Display the current resolved configuration
     "enabled": true,
     "provider": "ollama",
     "model": "llama3",
-    "base_url": "http://localhost:11434/v1",
-    "api_key": "ollama",
-    "max_tokens": 4096,
-    "temperature": 0.2,
-    "timeout": 180
+    "base_url": "http://localhost:11434/v1"
   },
   "scanner": {
     "threads": 10,
     "timeout": 15,
-    "user_agent_rotation": true,
-    "stealth_mode": false,
-    "delay_between_requests": 0.0,
-    "proxy": null,
     "verify_ssl": false
   },
   "confirmation": {
     "run_confirmations": true,
     "allow_cautious_tests": false
   },
-  "exploit": {
-    "auto_generate": true,
-    "auto_generate_severity": ["CRITICAL", "HIGH"]
+  "reporting": {
+    "pdf_enabled": true,
+    "html_enabled": true,
+    "json_enabled": true,
+    "markdown_enabled": false
   }
 }
 ```
 
-### AI Providers
-
-| Provider | `"provider"` | API Key Required | Notes |
-|---|---|:---:|---|
-| **Ollama** (local) | `"ollama"` | ❌ No | Free, offline, private — **recommended** |
-| **OpenAI** | `"openai"` | ✅ Yes | GPT-4o, GPT-4-turbo, GPT-3.5 |
-| **Anthropic** | `"anthropic"` | ✅ Yes | Claude 3 Opus / Sonnet |
-| **Google Gemini** | `"gemini"` | ✅ Yes | Gemini 1.5 Pro |
-
----
-
-## 🔄 10-Phase Scan Pipeline
-
-```
-Phase 0  ──  Recon             IP · GeoIP · SSL cert · server headers · page title
-Phase 1  ──  WAF Detection     Fingerprint firewall · get evasion hints
-Phase 2  ──  CMS Detection     WordPress / Joomla / Drupal · version (7 signals)
-Phase 3  ──  Enumeration       Plugins (53 slugs) · Themes (23 slugs) · Users (4 methods)
-Phase 4  ──  Active Tests      XML-RPC · REST API · login oracle · file exposure · SQLi/XSS
-Phase 5  ──  VulnDB Match      Local SQLite DB + WPVulnerability.net live API
-Phase 6  ──  Confirmation      Per-CVE active HTTP proof-of-exploitability
-Phase 7  ──  AI Exploit Gen    Python PoC · cURL · manual steps · business impact
-Phase 8  ──  AI Analysis       Exec summary · risk score (0-10) · attack chain · CVE explain
-Phase 9  ──  Reports           JSON · HTML (dark mode) · PDF · Markdown
-```
-
-### The 3-Stage Core
-
-```
- ┌──────────┐      ┌──────────┐      ┌────────────────┐
- │  DETECT  │─────▶│ CONFIRM  │─────▶│  AI  EXPLOIT   │
- └──────────┘      └──────────┘      └────────────────┘
-  Local DB &         Active HTTP        ✦ Python PoC
-  Live API           proof test         ✦ cURL command
-  version match      per-CVE            ✦ Manual steps
-                                        ✦ Business impact
-```
-
-1. **DETECT** — Match installed component versions against local vulnDB + WPVulnerability.net API
-2. **CONFIRM** — Send targeted safe HTTP requests to prove the vulnerability is actually exploitable (eliminates false positives)
-3. **AI EXPLOIT** — AI produces a working Python PoC, cURL one-liner, step-by-step manual exploitation guide, and business-risk summary
-
----
-
-## 📊 Reports
-
-Reports are saved to `./reports/` by default:
-
-| Format | Filename | Description |
-|---|---|---|
-| **JSON** | `wp_hijack_<host>.json` | Full machine-readable scan results |
-| **HTML** | `wp_hijack_<host>.html` | Dark-mode interactive report with syntax highlighting |
-| **PDF** | `wp_hijack_<host>.pdf` | Printable report for clients *(requires WeasyPrint)* |
-| **Markdown** | `wp_hijack_<host>.md` | Clean text report — use `--markdown` flag |
-
----
-
-## 🗂️ Project Structure
-
-```
-wp_hijack/
-├── cli.py                     CLI entry point (Typer)
-├── scanner.py                 10-phase async pipeline orchestrator
-├── recon.py                   Passive recon — IP, SSL, headers, title
-├── http_client.py             Async HTTP client — UA rotation, retry, proxy
-├── config.py                  Config loading & validation
-├── ai/
-│   ├── client.py              Provider-agnostic AI interface (OpenAI/Anthropic/Gemini/Ollama)
-│   ├── exploit_generator.py   AI exploit code generation
-│   ├── summary.py             Executive summary generator
-│   ├── risk_scorer.py         AI risk score 0–10
-│   ├── attack_chain.py        Multi-step attack narrative builder
-│   ├── false_positive.py      AI false-positive filter
-│   ├── waf_bypass.py          WAF bypass technique generator
-│   └── chat.py                Interactive AI chat session
-├── cms/                       CMS detection (WordPress, Joomla, Drupal)
-├── enumerators/               Plugin (53), theme (23), user (4-method) enumeration
-├── active_tests/              XML-RPC, REST API, SQLi/XSS, file exposure probes
-├── pipeline/                  DETECT → CONFIRM data models
-├── vulndb/                    SQLite vuln DB + WPVulnerability.net API client
-├── waf/                       WAF fingerprinting & evasion hints
-├── reporting/                 JSON / HTML / PDF / Markdown report writers
-└── templates/                 Jinja2 HTML report template (dark mode)
-```
-
----
-
-## 🛡️ Vulnerability Database
-
-WP-Hijack uses a **dual-source** strategy:
-
-| Source | When Used | API Key |
+| Provider | `"provider"` value | API Key |
 |---|---|:---:|
-| **Local SQLite DB** (`vulns.json`) | Always — offline, instant lookup | ❌ |
-| **WPVulnerability.net API** | Live lookup during every scan | ❌ |
+| Ollama (local) | `"ollama"` | No (free) |
+| OpenAI | `"openai"` | Yes |
+| Anthropic | `"anthropic"` | Yes |
+| Google Gemini | `"gemini"` | Yes |
 
-```bash
-# Pull latest vulnerability data
-wp-hijack update-db
+Run `wp-hijack show-config` to inspect the effective runtime config.
 
-# Pull specific years only
-wp-hijack update-db --years 2024,2025
+---
+
+## Output & Reports
+
+Reports are saved to `./reports` by default:
+
+| Format | File | Description |
+|---|---|---|
+| **JSON** | `wp_hijack_<host>.json` | Full machine-readable scan data |
+| **HTML** | `wp_hijack_<host>.html` | Dark-mode styled browser report |
+| **PDF** | `wp_hijack_<host>.pdf` | Printable client report *(needs WeasyPrint)* |
+| **Markdown** | `wp_hijack_<host>.md` | Plain-text — add `--markdown` flag |
+
+---
+
+## Project Layout
+
+```text
+wp_hijack/
+├── cli.py               CLI entry point (Typer)
+├── scanner.py           10-phase pipeline orchestrator
+├── recon.py             Passive recon — IP, SSL, headers, title
+├── http_client.py       Async HTTP — UA rotation, retry, proxy
+├── config.py            Config loading & validation
+├── ai/                  AI providers, exploit gen, chat, scoring
+├── cms/                 CMS detection (WordPress, Joomla, Drupal)
+├── enumerators/         Plugin / theme / user enumeration
+├── active_tests/        XML-RPC, REST API, SQLi/XSS, file exposure
+├── pipeline/            DETECT → CONFIRM data models
+├── vulndb/              SQLite DB + WPVulnerability.net client
+├── waf/                 WAF fingerprinting & evasion
+├── reporting/           JSON / HTML / PDF / Markdown writers
+└── templates/           Jinja2 HTML report template
 ```
 
 ---
 
-## 💡 Usage Examples
-
-### Full scan — everything enabled
-```bash
-wp-hijack scan https://shop.example.com \
-  --cautious \
-  --verbose \
-  --markdown \
-  --yes-ai \
-  --output ./reports
-```
-
-### Route through Burp Suite (intercept traffic)
-```bash
-# In config.json set: "proxy": "http://127.0.0.1:8080"
-wp-hijack scan https://target.com --config config.json
-```
-
-### Air-gapped machine (Ollama, no internet needed)
-```bash
-ollama serve
-wp-hijack scan https://intranet-wordpress.local --yes-ai
-```
-
-### Bug bounty bulk campaign
-```bash
-wp-hijack scan --file scope.txt \
-  --output ./bb-reports \
-  --no-ai-prompt \
-  --cautious
-```
-
-### OpenAI GPT-4o override for one scan
-```bash
-wp-hijack scan https://target.com --provider openai --model gpt-4o --yes-ai
-```
-
----
-
-## 🗺️ Roadmap
-
-> Community contributions are very welcome! Check issues tagged [`help wanted`](https://github.com/kdo2064/wp-Hijack/issues).
+## Roadmap
 
 | Status | Feature |
 |:---:|---|
-| ✅ | 10-phase async scan pipeline |
-| ✅ | Multi-provider AI (OpenAI / Anthropic / Gemini / Ollama) |
-| ✅ | DETECT → CONFIRM → AI EXPLOIT chain |
-| ✅ | Dark-mode HTML + PDF reports |
-| ✅ | WAF detection & bypass hints |
-| ✅ | 53-plugin + 23-theme wordlist probing |
-| 🔄 | WooCommerce-specific vulnerability checks |
-| 🔄 | Nuclei template export |
-| 🔄 | Metasploit payload generation |
-| 🔄 | GitHub Actions CI integration |
-| 📋 | Web UI (Flask dashboard) |
-| 📋 | Docker image |
-| 📋 | Shodan integration for recon |
-| 📋 | Auto-exploit chaining (multi-CVE) |
+| Done | 10-phase async pipeline |
+| Done | Multi-AI (Ollama / OpenAI / Anthropic / Gemini) |
+| Done | DETECT → CONFIRM → AI EXPLOIT chain |
+| Done | 53-plugin + 23-theme wordlist probing |
+| Done | Exponential-backoff HTTP retry & URL typo detection |
+| Done | Dark-mode HTML + PDF + JSON + Markdown reports |
+| In Progress | WooCommerce-specific vuln checks |
+| In Progress | Nuclei template export |
+| Planned | Docker image |
+| Planned | Web dashboard (Flask) |
+| Planned | Shodan recon integration |
+| Planned | Auto exploit chaining (multi-CVE) |
 
 ---
 
-## 🤝 Contributing
-
-Contributions make the open-source community great. All PRs are welcome!
-
-### How to contribute
+## Contributing
 
 ```bash
-# 1. Fork the repo on GitHub
-# 2. Clone your fork
 git clone https://github.com/<your-username>/wp-Hijack
-cd wp-Hijack
-
-# 3. Create a feature branch
-git checkout -b feature/my-new-feature
-
-# 4. Make your changes and test
-pip install -e .
-wp-hijack scan https://test-site.com
-
-# 5. Commit and push
-git commit -m "feat: add my new feature"
-git push origin feature/my-new-feature
-
-# 6. Open a Pull Request on GitHub
+git checkout -b feature/my-feature
+# make your changes
+git commit -m "feat: describe your change"
+git push origin feature/my-feature
+# open a Pull Request on GitHub
 ```
 
-### Areas where help is needed
-
-- 🐛 **Bug reports** — open an [Issue](https://github.com/kdo2064/wp-Hijack/issues)
-- 🔌 **New active-test modules** — add to `wp_hijack/active_tests/`
-- 📚 **Vuln DB entries** — extend `wp_hijack/vulndb/vulns.json`
-- 🌐 **New CMS support** — add to `wp_hijack/cms/`
-- 🤖 **Better AI prompts** — improve `wp_hijack/ai/exploit_prompts.py`
-- 📖 **Documentation** — fix typos, add examples
-
-Please read the [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
+| Area | Where |
+|---|---|
+| Bug reports | [Open an issue](https://github.com/kdo2064/wp-Hijack/issues) |
+| New active-test modules | `wp_hijack/active_tests/` |
+| Vuln DB entries | `wp_hijack/vulndb/vulns.json` |
+| Better AI prompts | `wp_hijack/ai/exploit_prompts.py` |
+| New CMS support | `wp_hijack/cms/` |
 
 ---
 
-## 📝 Changelog
+## Legal Disclaimer
 
-### v1.0.0 — April 2026 *(Initial Release)*
-
-- ✅ 10-phase async scan pipeline
-- ✅ Multi-provider AI exploit generation (OpenAI, Anthropic, Gemini, Ollama)
-- ✅ DETECT → CONFIRM → AI EXPLOIT chain
-- ✅ 53-plugin + 23-theme wordlist probing (works on hardened sites)
-- ✅ `wp-json` REST API CMS fingerprinting (+40 confidence signal)
-- ✅ Dual vuln DB (local SQLite + WPVulnerability.net live)
-- ✅ Exponential-backoff HTTP retry (3 attempts, 1s/2s backoff)
-- ✅ URL validation — catches typos before scan starts
-- ✅ Clean-site AI summary (not just "no findings – skipped")
-- ✅ Dark-mode HTML + PDF + JSON + Markdown reports
-- ✅ WAF detection with bypass hint generation
-- ✅ Interactive AI chat session (`--chat`)
+> **Authorized use only.**
+>
+> You must have **explicit written permission** from the system owner before running any
+> scan. Unauthorized scanning is illegal under the CFAA, Computer Misuse Act, and
+> equivalent laws worldwide.
+>
+> The developer (**KDO || Xpert Exploit**) assumes **zero liability** for any misuse,
+> damage, or legal consequences from using this software.
+>
+> You own the target &nbsp;|&nbsp; You have written authorization &nbsp;|&nbsp; Legal testing environment
+>
+> **Scan responsibly. Hack ethically.**
 
 ---
 
-## ⚠️ Legal Disclaimer
+## Author
 
-> **This tool is strictly for authorized security testing ONLY.**
->
-> You must have **explicit written permission** from the target system owner
-> before running any scan. Unauthorized use is **illegal** and may result in
-> criminal prosecution under the CFAA, Computer Misuse Act, or equivalent laws
-> in your jurisdiction.
->
-> The developer (**KDO || Xpert Exploit**) assumes **zero liability** for any
-> misuse, damage, or legal consequences arising from the use of this software.
->
-> **Scan only what you own or have written authorization to test.**
-> **Use responsibly. Hack ethically.**
-
----
-
-## 👤 Author
-
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/kdo2064">
-        <img src="https://github.com/kdo2064.png" width="80" style="border-radius:50%"/><br/>
-        <sub><b>KDO || Xpert Exploit</b></sub>
-      </a>
-    </td>
-  </tr>
-</table>
-
-- 🐙 GitHub: [github.com/kdo2064](https://github.com/kdo2064)
-- 📦 Project: [github.com/kdo2064/wp-Hijack](https://github.com/kdo2064/wp-Hijack)
-- 🐛 Issues: [github.com/kdo2064/wp-Hijack/issues](https://github.com/kdo2064/wp-Hijack/issues)
+<p align="center">
+  <a href="https://github.com/kdo2064">
+    <img src="https://github.com/kdo2064.png" width="90" style="border-radius:50%" alt="kdo2064"/>
+    <br/><b>KDO || Xpert Exploit</b>
+  </a>
+  <br/><br/>
+  <a href="https://github.com/kdo2064">GitHub</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/kdo2064/wp-Hijack/issues">Issues</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/kdo2064/wp-Hijack">Project</a>
+</p>
 
 ---
 
 <p align="center">
-  <a href="https://github.com/kdo2064/wp-Hijack">
-    <img src="assets/logo.png" alt="WP-Hijack" width="200"/>
-  </a>
+  <img src="assets/logo.png" width="160" alt="WP-Hijack"/>
   <br/><br/>
   <a href="https://github.com/kdo2064/wp-Hijack/stargazers">
     <img src="https://img.shields.io/github/stars/kdo2064/wp-Hijack?style=social" alt="Stars"/>
   </a>
-  &nbsp;
+  &nbsp;&nbsp;
   <a href="https://github.com/kdo2064/wp-Hijack/network/members">
     <img src="https://img.shields.io/github/forks/kdo2064/wp-Hijack?style=social" alt="Forks"/>
   </a>
   <br/><br/>
-  <i>If this tool helped you, please give it a ⭐ — it really helps!</i>
+  <sub>If WP-Hijack helped you, consider starring the repo — it means a lot.</sub>
   <br/>
-  <i>Made for the security community — use it to protect, not to harm.</i>
+  <sub>Made for the security community · use it to <b>protect</b>, not to harm.</sub>
 </p>
+

@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wp-hijack"
+version = "1.0.0"
+description = "Advanced WordPress Vulnerability Scanner with AI-powered exploit generation"
+authors = [{ name = "KDO || Xpert Exploit", email = "kdo2064@github.com" }]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.11"
+keywords = ["wordpress", "security", "vulnerability", "scanner", "penetration-testing"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Information Technology",
+    "Topic :: Security",
+    "Programming Language :: Python :: 3.11",
+]
+dependencies = [
+    "httpx[http2]>=0.27",
+    "typer[all]>=0.12",
+    "rich>=13.7",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.2",
+    "aiosqlite>=0.20",
+    "jinja2>=3.1",
+    "weasyprint>=62.0",
+    "matplotlib>=3.9",
+    "packaging>=24.0",
+    "feedparser>=6.0",
+    "openai>=1.30",
+    "anthropic>=0.28",
+    "google-genai>=1.0",
+    "aiofiles>=23.2",
+    "pyyaml>=6.0",
+    "pydantic>=2.7",
+]
+
+[project.scripts]
+wp-hijack = "wp_hijack.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["wp_hijack*"]
+
+[tool.setuptools.package-data]
+"wp_hijack" = [
+    "vulndb/vulns.json",
+    "vulndb/wp_hijack.db",
+    "vulndb/wp_fingerprints.json",
+    "vulndb/plugin_wordlist.txt",
+    "templates/*.j2",
+    "templates/*.html",
+    "reporting/templates/*.html",
+    "reporting/templates/static/*.css",
+    "reporting/templates/static/*.js",
+]

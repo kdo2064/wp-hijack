@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>wp-Hijack Security Report — {{ target }}</title>
+<style>
+  :root {
+    --bg:       #0a0e14;
+    --surface:  #12181f;
+    --border:   #1e2a38;
+    --green:    #00ff41;
+    --blue:     #00d4ff;
+    --orange:   #ff6b35;
+    --red:      #e74c3c;
+    --amber:    #e67e22;
+    --yellow:   #f39c12;
+    --lowgreen: #2ecc71;
+    --text:     #c9d1d9;
+    --dim:      #6e7681;
+    --code-bg:  #0d1117;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+
+  /* Header */
+  .banner { background: linear-gradient(135deg, #0a0e14 0%, #12181f 100%); border-bottom: 2px solid var(--green); padding: 32px 48px; }
+  .banner h1 { font-size: 2.4rem; color: var(--orange); font-weight: 800; letter-spacing: 2px; }
+  .banner .subtitle { color: var(--blue); font-size: 1rem; margin-top: 4px; }
+  .banner .meta { color: var(--dim); font-size: 0.85rem; margin-top: 8px; }
+
+  /* Layout */
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 48px; }
+  section { margin-bottom: 40px; }
+  h2 { color: var(--green); font-size: 1.3rem; margin-bottom: 16px; border-left: 4px solid var(--green); padding-left: 12px; }
+  h3 { color: var(--blue); font-size: 1.05rem; margin-bottom: 8px; }
+
+  /* Target card */
+  .target-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 28px; margin-bottom: 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+  .tc-item label { display: block; color: var(--dim); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+  .tc-item span { font-weight: 600; color: var(--text); }
+
+  /* Severity badges */
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+  .badge-CRITICAL { background: var(--red);    color: #fff; }
+  .badge-HIGH     { background: var(--amber);  color: #fff; }
+  .badge-MEDIUM   { background: var(--yellow); color: #000; }
+  .badge-LOW      { background: var(--lowgreen); color: #000; }
+  .badge-INFO     { background: #3498db; color: #fff; }
+
+  /* Vuln table */
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--surface); border-bottom: 2px solid var(--green); }
+  th { padding: 10px 12px; text-align: left; color: var(--green); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: var(--surface); }
+  td { padding: 10px 12px; vertical-align: top; }
+
+  /* Finding cards */
+  .finding-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 24px; overflow: hidden; }
+  .finding-card.CRITICAL { border-left: 4px solid var(--red); }
+  .finding-card.HIGH     { border-left: 4px solid var(--amber); }
+  .finding-card.MEDIUM   { border-left: 4px solid var(--yellow); }
+  .finding-card.LOW      { border-left: 4px solid var(--lowgreen); }
+  .fc-header { padding: 14px 20px; display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); }
+  .fc-cve    { color: var(--blue); font-weight: 700; font-size: 0.9rem; }
+  .fc-title  { color: var(--text); font-weight: 600; }
+  .fc-body   { padding: 16px 20px; display: grid; grid-template-columns: 160px 1fr; gap: 8px 0; }
+  .fc-label  { color: var(--dim); font-size: 0.8rem; text-transform: uppercase; padding-top: 2px; }
+  .fc-value  { color: var(--text); }
+
+  /* Exploit block */
+  .exploit-block { margin-top: 16px; }
+  .exploit-block summary { cursor: pointer; color: var(--orange); font-weight: 700; padding: 8px 0; user-select: none; }
+  .exploit-block summary:hover { color: #fff; }
+  pre, code { background: var(--code-bg); border: 1px solid var(--border); border-radius: 6px; padding: 14px; overflow-x: auto; font-family: 'Consolas','Cascadia Code',monospace; font-size: 0.82rem; color: #00ff41; white-space: pre-wrap; word-break: break-all; }
+  .curl-line { color: #00d4ff; }
+
+  /* Users table, files table use same styles as vuln table */
+  .status-CONFIRMED { color: var(--green); font-weight: 700; }
+  .status-POTENTIAL { color: var(--yellow); }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--border); padding: 24px 48px; color: var(--dim); font-size: 0.8rem; display: flex; justify-content: space-between; }
+  footer a { color: var(--blue); text-decoration: none; }
+
+  /* Misc */
+  .tag { display: inline-block; background: rgba(0,212,255,0.1); color: var(--blue); border: 1px solid rgba(0,212,255,0.3); border-radius: 4px; padding: 1px 8px; font-size: 0.75rem; margin: 2px; }
+  .summary-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px 28px; white-space: pre-wrap; line-height: 1.8; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+
+<div class="banner">
+  <h1>◈ wp-Hijack</h1>
+  <div class="subtitle">WordPress Vulnerability Assessment Report</div>
+  <div class="meta">
+    Developer: <strong style="color:var(--orange)">KDO || Xpert Exploit</strong> &nbsp;|&nbsp;
+    <a href="https://github.com/kdo2064/wp-Hijack" style="color:var(--blue)">github.com/kdo2064/wp-Hijack</a> &nbsp;|&nbsp;
+    Generated: {{ generated_at }}
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Target Info -->
+  <div class="target-card">
+    <div class="tc-item"><label>Target</label><span>{{ target }}</span></div>
+    <div class="tc-item"><label>CMS</label><span>{{ cms.type }}{% if cms.version %} {{ cms.version }}{% endif %}</span></div>
+    <div class="tc-item"><label>WAF</label><span>{{ waf.name if waf.detected else "None detected" }}</span></div>
+    <div class="tc-item"><label>Confirmed Vulns</label><span style="color:var(--red)">{{ confirmed_count }}</span></div>
+    <div class="tc-item"><label>Potential Vulns</label><span style="color:var(--yellow)">{{ potential_count }}</span></div>
+    <div class="tc-item"><label>Scan Time</label><span>{{ elapsed }}s</span></div>
+  </div>
+
+  {% if ai_summary %}
+  <section>
+    <h2>Executive Summary</h2>
+    <div class="summary-box">{{ ai_summary }}</div>
+  </section>
+  {% endif %}
+
+  <!-- Vulnerability Summary Table -->
+  <section>
+    <h2>Vulnerability Overview</h2>
+    {% if vulnerabilities %}
+    <table>
+      <thead><tr>
+        <th>#</th><th>Severity</th><th>CVE</th><th>Component</th><th>Title</th><th>CVSS</th><th>Status</th>
+      </tr></thead>
+      <tbody>
+        {% for v in vulnerabilities %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td><span class="badge badge-{{ v.severity }}">{{ v.severity }}</span></td>
+          <td style="color:var(--blue)">{{ v.cve }}</td>
+          <td>{{ v.component }}</td>
+          <td>{{ v.title }}</td>
+          <td>{{ v.cvss }}</td>
+          <td class="status-{{ v.status }}">{{ v.status }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--lowgreen)">No vulnerabilities confirmed.</p>
+    {% endif %}
+  </section>
+
+  <!-- Detailed Findings -->
+  {% if vulnerabilities %}
+  <section>
+    <h2>Detailed Findings</h2>
+    {% for v in vulnerabilities %}
+    <div class="finding-card {{ v.severity }}">
+      <div class="fc-header">
+        <span class="badge badge-{{ v.severity }}">{{ v.severity }}</span>
+        <span class="fc-cve">{{ v.cve }}</span>
+        <span class="fc-title">{{ v.title }}</span>
+      </div>
+      <div class="fc-body">
+        <div class="fc-label">Component</div><div class="fc-value">{{ v.component }} {% if v.installed_version %}v{{ v.installed_version }}{% endif %}</div>
+        <div class="fc-label">CVSS</div><div class="fc-value">{{ v.cvss }}</div>
+        <div class="fc-label">Fixed In</div><div class="fc-value">{{ v.fixed_version or "See advisory" }}</div>
+        <div class="fc-label">Status</div><div class="fc-value status-{{ v.status }}">{{ v.status }}</div>
+        <div class="fc-label">Description</div><div class="fc-value">{{ v.description }}</div>
+        <div class="fc-label">Remediation</div><div class="fc-value" style="color:var(--lowgreen)">{{ v.remediation }}</div>
+        {% if v.confirmation_evidence %}
+        <div class="fc-label">Evidence</div><div class="fc-value" style="color:var(--yellow)">{{ v.confirmation_evidence }}</div>
+        {% endif %}
+        {% if v.references %}
+        <div class="fc-label">References</div>
+        <div class="fc-value">{% for ref in v.references[:3] %}<a href="{{ ref }}" style="color:var(--blue);word-break:break-all">{{ ref }}</a><br>{% endfor %}</div>
+        {% endif %}
+      </div>
+      {% if v.exploit_python or v.exploit_curl %}
+      <div class="fc-body" style="border-top:1px solid var(--border);padding-top:12px">
+        <details class="exploit-block" style="grid-column:1/-1">
+          <summary>⚡ AI-Generated Exploit Code (Authorized Testing Only)</summary>
+          {% if v.exploit_curl %}
+          <h3 style="margin-top:12px;color:var(--orange)">cURL Command</h3>
+          <pre><code class="curl-line">{{ v.exploit_curl }}</code></pre>
+          {% endif %}
+          {% if v.exploit_python %}
+          <h3 style="margin-top:12px;color:var(--orange)">Python PoC</h3>
+          <pre><code class="language-python">{{ v.exploit_python }}</code></pre>
+          {% endif %}
+          {% if v.exploit_manual %}
+          <h3 style="margin-top:12px;color:var(--orange)">Manual Steps</h3>
+          <ol style="padding-left:20px;color:var(--text)">
+            {% for step in v.exploit_manual %}<li style="margin-bottom:6px">{{ step }}</li>{% endfor %}
+          </ol>
+          {% endif %}
+          {% if v.exploit_impact %}
+          <h3 style="margin-top:12px;color:var(--orange)">Impact</h3>
+          <p style="color:var(--text)">{{ v.exploit_impact }}</p>
+          {% endif %}
+          <p style="margin-top:12px;color:var(--dim);font-style:italic;font-size:0.8rem">
+            This code is for AUTHORIZED security testing only. Unauthorized use is illegal.
+          </p>
+        </details>
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <!-- Users -->
+  {% if users %}
+  <section>
+    <h2>Enumerated Users ({{ users|length }})</h2>
+    <table>
+      <thead><tr><th>ID</th><th>Login</th><th>Display Name</th><th>Source</th></tr></thead>
+      <tbody>
+        {% for u in users %}
+        <tr><td>{{ u.id or "?" }}</td><td style="color:var(--blue)">{{ u.login }}</td><td>{{ u.display_name or "" }}</td><td style="color:var(--dim)">{{ u.source }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+
+  <!-- Exposed Files -->
+  {% if exposed_files %}
+  <section>
+    <h2>Exposed Sensitive Files ({{ exposed_files|length }})</h2>
+    <table>
+      <thead><tr><th>Path</th><th>HTTP</th><th>Severity</th></tr></thead>
+      <tbody>
+        {% for f in exposed_files %}
+        <tr>
+          <td style="font-family:monospace;color:var(--orange)">{{ f.path }}</td>
+          <td>{{ f.status }}</td>
+          <td><span class="badge badge-{{ f.severity }}">{{ f.severity }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+
+</div><!-- /container -->
+
+<footer>
+  <span>wp-Hijack v1.0.0 — KDO || Xpert Exploit</span>
+  <a href="https://github.com/kdo2064/wp-Hijack">github.com/kdo2064/wp-Hijack</a>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+</body>
+</html>

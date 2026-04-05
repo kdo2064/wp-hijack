@@ -11,9 +11,6 @@
   <img src="https://img.shields.io/badge/License-MIT-22C55E?style=for-the-badge" alt="MIT"/>
   <img src="https://img.shields.io/badge/AI-Ollama%20%7C%20OpenAI%20%7C%20Anthropic%20%7C%20Gemini-8B5CF6?style=for-the-badge&logo=openai&logoColor=white" alt="AI"/>
   <img src="https://img.shields.io/badge/Platform-Win%20%7C%20Linux%20%7C%20macOS-6B7280?style=for-the-badge" alt="Platform"/>
-  <a href="https://hits.seeyoufarm.com">
-    <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fkdo2064%2Fwp-Hijack&count_bg=%23FF4444&title_bg=%230D1117&icon=github&icon_color=%23FFFFFF&title=Visitors&edge_flat=false" alt="Visitors"/>
-  </a>
 </p>
 
 ---

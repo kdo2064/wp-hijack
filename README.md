@@ -16,31 +16,6 @@
   </a>
 </p>
 
-<p align="center">
-  by <a href="https://github.com/kdo2064"><b>KDO / Xpert Exploit</b></a>
-  &nbsp;·&nbsp;
-  <a href="https://github.com/kdo2064/wp-Hijack/issues/new">Report a Bug</a>
-  &nbsp;·&nbsp;
-  <a href="https://github.com/kdo2064/wp-Hijack/issues/new">Request a Feature</a>
-</p>
-
----
-
-## Table of Contents
-
-- [What is WP-Hijack?](#what-is-wp-hijack)
-- [Highlights](#highlights)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Commands & Flags](#commands--flags)
-- [Configuration](#configuration)
-- [Output & Reports](#output--reports)
-- [Project Layout](#project-layout)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [Legal Disclaimer](#legal-disclaimer)
-- [Author](#author)
-
 ---
 
 ## What is WP-Hijack?

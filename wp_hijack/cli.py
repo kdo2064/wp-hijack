@@ -128,6 +128,14 @@ def _main(
 
 
 
+@app.command(name="vi", hidden=True)
+def _vi_alias(ctx: typer.Context) -> None:
+    """Alias: show the wp-Hijack banner and command overview."""
+    from . import __version__
+    print_banner(__version__)
+    typer.echo(ctx.parent.get_help() if ctx.parent else "")
+
+
 def _resolve_output(base: str, suffix: str, target: str) -> pathlib.Path:
 
     """Build a default output path from target hostname."""

@@ -1361,10 +1361,19 @@ def _do_single_scan(
 
 
     scanner = Scanner.__new__(Scanner)
-
-
-
     scanner.cfg = cfg
+    scanner._target = ""
+    scanner._results = {}
+    scanner._notifier = None
+
+    # Wire Telegram notifier from config
+    _tg_cfg = cfg.get("telegram", {})
+    if _tg_cfg.get("enabled"):
+        try:
+            from .telegram.notifier import TelegramNotifier as _TGN
+            scanner._notifier = _TGN(_tg_cfg)
+        except Exception as _tg_err:
+            console.print(f"[dim]  Telegram notifier init failed: {_tg_err}[/]")
 
 
 
@@ -1547,6 +1556,16 @@ def _do_single_scan(
 
 
     console.print()
+
+    # Telegram: send the final report PDF/HTML
+    if getattr(scanner, "_notifier", None):
+        _html_p = report_paths.get("html")
+        _pdf_p  = report_paths.get("pdf")
+        if _html_p and pathlib.Path(str(_html_p)).exists():
+            try:
+                asyncio.run(scanner._notifier.send_report(_html_p, _pdf_p))
+            except Exception as _tg_send_err:
+                console.print(f"[dim]  Telegram report send failed: {_tg_send_err}[/]")
 
 
 
@@ -3728,6 +3747,53 @@ class _DictProxy:
 
 
 
+
+@app.command(name="bot")
+def bot_command(
+    config: str = typer.Option(None, "--config", "-c", help="Path to config.json"),
+) -> None:
+    """Start the Telegram bot controller — listen for /scan, /agent, /status commands."""
+    import asyncio as _asyncio
+
+    from .config import load_config as _load_config
+
+    cfg = _load_config(config)
+    tg_cfg = cfg.get("telegram", {})
+
+    if not tg_cfg.get("enabled"):
+        console.print(
+            "[bold yellow]  Telegram is disabled.[/]\n"
+            "  Set [bold white]telegram.enabled = true[/] and [bold white]telegram.bot_token[/] in config.json first."
+        )
+        raise typer.Exit(1)
+
+    if not tg_cfg.get("bot_token") or tg_cfg.get("bot_token") == "YOUR_BOT_TOKEN_HERE":
+        console.print(
+            "[bold red]  No bot_token set in config.json![/]\n"
+            "  Create a bot via @BotFather on Telegram, copy the token, and set it in config.json."
+        )
+        raise typer.Exit(1)
+
+    print_banner(__version__)
+    console.print("[bold #FF6B35]  Telegram Bot Controller starting...[/]")
+    console.print(f"  Bot token: [dim]{tg_cfg['bot_token'][:10]}...[/]")
+    chat_ids = tg_cfg.get("allowed_chat_ids", [])
+    if chat_ids:
+        console.print(f"  Allowed chat IDs: [bold white]{chat_ids}[/]")
+    else:
+        console.print("[bold yellow]  WARNING: No allowed_chat_ids set — bot accepts commands from anyone![/]")
+    console.print()
+    console.print("  Send [bold white]/help[/] to your bot on Telegram to get started.")
+    console.print("  Press [bold white]Ctrl+C[/] to stop.\n")
+
+    from .telegram.controller import BotController
+    ctrl = BotController(tg_cfg=tg_cfg, full_cfg=cfg)
+    try:
+        _asyncio.run(ctrl.run_forever())
+    except KeyboardInterrupt:
+        console.print("\n[dim]  Bot controller stopped.[/]")
+
+
 def main() -> None:
 
 
@@ -3749,6 +3815,5 @@ if __name__ == "__main__":
 
 
     main()
-
 
 

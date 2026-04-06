@@ -90,6 +90,14 @@ from .ui.progress    import ScanProgress
 
 
 
+# Telegram notifier — optional, injected via set_notifier() or auto-created from config
+try:
+    from .telegram.notifier import TelegramNotifier as _TelegramNotifier
+except ImportError:
+    _TelegramNotifier = None  # type: ignore[assignment,misc]
+
+
+
 
 
 
@@ -115,6 +123,17 @@ class Scanner:
 
 
         self._results: dict[str, Any] = {}
+
+        self._notifier: "Any | None" = None
+
+        # Auto-create notifier from config if telegram section is enabled
+        _tg_cfg = self.cfg.get("telegram", {})
+        if _tg_cfg.get("enabled") and _TelegramNotifier:
+            self._notifier = _TelegramNotifier(_tg_cfg)
+
+    def set_notifier(self, notifier: "Any") -> None:
+        """Attach a TelegramNotifier (or compatible notifier) to this scanner."""
+        self._notifier = notifier
 
 
 
@@ -228,8 +247,12 @@ class Scanner:
 
 
 
-            phase_header("Phase 0/10  ·  Recon")
+            if self._notifier:
+                self._notifier.notify_scan_start(self._target)
 
+            phase_header("Phase 0/10  ·  Recon")
+            if self._notifier:
+                self._notifier.notify_phase("Phase 0/10 · Recon", "Gathering target intelligence…")
 
 
             with console.status("[scan.phase]Gathering target intelligence...[/]", spinner="dots"):
@@ -307,7 +330,8 @@ class Scanner:
 
 
             phase_header("Phase 2/10  ·  WAF Detection")
-
+            if self._notifier:
+                self._notifier.notify_phase("Phase 2/10 · WAF Detection", "Probing for firewall / WAF presence…")
 
 
             with PhaseSpinner("Detecting WAF") as sp:
@@ -345,7 +369,8 @@ class Scanner:
 
 
             phase_header("Phase 3/10  ·  CMS Detection")
-
+            if self._notifier:
+                self._notifier.notify_phase("Phase 3/10 · CMS Detection", "Fingerprinting CMS type & version…")
 
 
             with console.status("[scan.phase]Detecting CMS...[/]", spinner="dots"):
@@ -409,6 +434,8 @@ class Scanner:
 
 
             phase_header("Phase 4/10  ·  Enumeration")
+            if self._notifier:
+                self._notifier.notify_phase("Phase 4/10 · Enumeration", "Enumerating installed plugins, themes and users…")
 
 
 
@@ -459,6 +486,8 @@ class Scanner:
 
 
             phase_header("Phase 5/10  ·  Active Tests")
+            if self._notifier:
+                self._notifier.notify_phase("Phase 5/10 · Active Tests", "Running XML-RPC, REST API, login security, file exposure & injection checks…")
 
 
 
@@ -541,6 +570,9 @@ class Scanner:
 
 
             phase_header("Phase 6/10  ·  VulnDB Matching")
+            if self._notifier:
+                self._notifier.notify_phase("Phase 6/10 · VulnDB Matching", f"Matching {len(components_to_check) if 'components_to_check' in dir() else '?'} components against vulnerability database…")
+
 
 
 
@@ -892,7 +924,20 @@ class Scanner:
 
 
 
+            # Notify findings after VulnDB matching
+            if self._notifier and potential_findings:
+                for pf in potential_findings:
+                    self._notifier.notify_finding(
+                        severity=pf.severity,
+                        title=pf.title,
+                        component=pf.component,
+                        cve=pf.cve,
+                    )
+
             phase_header("Phase 8/10  ·  Active Confirmation")
+            if self._notifier:
+                self._notifier.notify_phase("Phase 8/10 · Active Confirmation", f"Verifying {len(potential_findings)} potential vulnerabilities via live HTTP probes…")
+
 
 
 
@@ -1075,7 +1120,8 @@ class Scanner:
 
 
                 phase_header("Phase 9/10  ·  AI Agent (8 modules)")
-
+                if self._notifier:
+                    self._notifier.notify_phase("Phase 9/10 · AI Analysis", "Running exploit generation, CVE research, WAF bypass & risk scoring…")
 
 
                 exploit_cfg = get_exploit_config(self.cfg)
@@ -1634,8 +1680,28 @@ class Scanner:
 
             results["elapsed"] = time.monotonic() - t_start
 
-
-
+            # Telegram: final summary notification
+            if self._notifier:
+                _confirmed_list = results.get("confirmed", [])
+                _c_conf = sum(
+                    1 for cf in _confirmed_list
+                    if getattr(cf, "status", None)
+                    and getattr(cf.status, "value", "") == "CONFIRMED"
+                )
+                _critical = sum(
+                    1 for cf in _confirmed_list
+                    if getattr(getattr(cf, "finding", cf), "severity", "") == "CRITICAL"
+                )
+                _high = sum(
+                    1 for cf in _confirmed_list
+                    if getattr(getattr(cf, "finding", cf), "severity", "") == "HIGH"
+                )
+                self._notifier.notify_scan_complete(
+                    elapsed=results["elapsed"],
+                    confirmed_count=_c_conf,
+                    critical=_critical,
+                    high=_high,
+                )
 
 
 

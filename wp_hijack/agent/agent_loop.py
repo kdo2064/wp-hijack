@@ -171,6 +171,13 @@ class AutonomousAgent:
         # Session memory — persists discoveries across every step
         self.memory: AgentMemory = AgentMemory(target=target)
 
+        # Telegram notifier — optional, set via set_notifier() or auto-wired by cli.py
+        self._notifier: "Any | None" = None
+
+    def set_notifier(self, notifier: "Any") -> None:
+        """Attach a TelegramNotifier (or compatible object) to this agent."""
+        self._notifier = notifier
+
 
 
                                                                                 
@@ -998,6 +1005,20 @@ class AutonomousAgent:
             agent_step, next_message = await self._execute_action(action, step_idx)
 
             session.add_step(agent_step)
+
+            # Telegram: broadcast this step's summary
+            if self._notifier:
+                _tool = action.tool if action.action == "run_tool" else None
+                _result_summary = None
+                if agent_step.result:
+                    _result_summary = (agent_step.result.stdout or "")[:150].strip()
+                self._notifier.notify_agent_step(
+                    step=step_idx,
+                    thought=action.thought or "",
+                    action=action.action,
+                    tool=_tool,
+                    result_summary=_result_summary,
+                )
 
 
 

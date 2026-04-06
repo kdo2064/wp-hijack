@@ -62,5 +62,16 @@
     "python_exploit_timeout": 45,
     "max_output_chars": 3000,
     "allowed_tools": ["nmap", "whatweb", "nikto", "gobuster", "ffuf", "wpscan", "curl", "sqlmap", "hydra"]
+  },
+  "telegram": {
+    "enabled": false,
+    "bot_token": "YOUR_BOT_TOKEN_HERE",
+    "allowed_chat_ids": [],
+    "notify_scan_phases": true,
+    "notify_agent_steps": true,
+    "notify_findings": true,
+    "send_report_pdf": true,
+    "pdf_via_playwright": true,
+    "silent_mode": false
   }
 }

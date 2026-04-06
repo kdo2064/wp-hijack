@@ -3380,7 +3380,7 @@ def pwn(
 
 
 
-                                             help="Max agent steps (default: from config)"),
+                                             help="Optional step cap (default: unlimited — agent runs until target is compromised)"),
 
 
 

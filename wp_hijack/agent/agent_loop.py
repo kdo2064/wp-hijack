@@ -133,7 +133,7 @@ class AutonomousAgent:
 
 
 
-        self.max_steps: int = agent_cfg.get("max_steps", 30)
+        self.max_steps: int | None = agent_cfg.get("max_steps", None)  # None = unlimited
 
         self.tool_timeout: int = agent_cfg.get("tool_timeout", 120)
 
@@ -727,7 +727,7 @@ class AutonomousAgent:
 
                 f"Target: [bold #FF6B35]{self.target}[/]\n"
 
-                f"Max steps: [bold]{self.max_steps}[/]\n"
+                f"Steps: [bold]{'unlimited — runs until target is compromised' if not self.max_steps else str(self.max_steps)}[/]\n"
 
                 f"Available tools: {', '.join(t for t, ok in availability.items() if ok) or 'none'}",
 
@@ -748,8 +748,6 @@ class AutonomousAgent:
             target=self.target,
 
             available_tools_block=tools_block,
-
-            max_steps=self.max_steps,
 
         )
 
@@ -788,9 +786,59 @@ class AutonomousAgent:
 
 
 
-        while step_idx <= self.max_steps:
+        while True:
 
-            console.rule(f"[dim]Step {step_idx} / {self.max_steps}[/dim]")
+            # Optional hard cap — only if explicitly set via -n / config
+
+            if self.max_steps and step_idx > self.max_steps:
+
+                console.print(
+
+                    f"[yellow]Optional step cap ({self.max_steps}) reached. Requesting final report…[/yellow]"
+
+                )
+
+                final_text = await self._ask_ai(
+
+                    f"You have completed {self.max_steps} steps (optional cap). "
+
+                    "Summarise all findings now and respond with a 'done' JSON action."
+
+                )
+
+                final_action = parse_agent_response(final_text)
+
+                if final_action and final_action.action == "done":
+
+                    session.finish(
+
+                        summary=final_action.summary,
+
+                        findings=final_action.findings,
+
+                    )
+
+                    self._print_findings(final_action.findings)
+
+                else:
+
+                    session.finish(
+
+                        summary=f"Cap of {self.max_steps} steps reached — partial assessment.",
+
+                        findings=[],
+
+                        aborted=True,
+
+                        reason="max_steps_reached",
+
+                    )
+
+                break
+
+
+
+            console.rule(f"[dim]Step {step_idx}[/dim]")
 
 
 
@@ -909,54 +957,6 @@ class AutonomousAgent:
                 next_message = next_message + error_hint
 
             step_idx += 1
-
-
-
-        else:
-
-                                   
-
-            console.print(
-
-                f"[yellow]Step budget ({self.max_steps}) exhausted. Requesting final report…[/yellow]"
-
-            )
-
-            final_text = await self._ask_ai(
-
-                f"You have used all {self.max_steps} steps. "
-
-                "Summarise your findings and respond with a 'done' JSON action now."
-
-            )
-
-            final_action = parse_agent_response(final_text)
-
-            if final_action and final_action.action == "done":
-
-                session.finish(
-
-                    summary=final_action.summary,
-
-                    findings=final_action.findings,
-
-                )
-
-                self._print_findings(final_action.findings)
-
-            else:
-
-                session.finish(
-
-                    summary="Step budget exhausted — partial assessment.",
-
-                    findings=[],
-
-                    aborted=True,
-
-                    reason="max_steps_reached",
-
-                )
 
 
 

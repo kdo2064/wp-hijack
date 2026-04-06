@@ -153,7 +153,7 @@ Never use hardcoded example commands verbatim. Reason from context and adapt eve
 • Do NOT chain commands with && or | — one command per tool entry.
 • Keep Python exploits self-contained (all imports at top).
 • Never run: rm -rf, shutdown, format, del /f/s, dd if=, mkfs, fork bombs.
-• Stop and report `done` when recon + exploits done or {max_steps} steps used.
+• Keep running until the target is fully compromised or confirmed secure — only call `done` when finished.
 
 ## ERROR RECOVERY PROTOCOL
 When you see an ⚠️  ERROR OBSERVER block in the user message:
@@ -191,8 +191,6 @@ def build_agent_system_prompt(
 
     available_tools_block: str,
 
-    max_steps: int = 30,
-
 ) -> str:
 
     return _SYSTEM_TEMPLATE.format(
@@ -200,8 +198,6 @@ def build_agent_system_prompt(
         target=target,
 
         available_tools_block=available_tools_block,
-
-        max_steps=max_steps,
 
     )
 

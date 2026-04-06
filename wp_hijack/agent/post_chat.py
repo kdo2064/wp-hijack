@@ -182,7 +182,7 @@ class AgentPostChat:
         console.print()
         try:
             async for chunk in ask_stream(
-                question=question,
+                prompt=question,
                 system=self._system,
                 history=self._history[:-1],  # exclude the message we just appended
                 config=self.ai_cfg,

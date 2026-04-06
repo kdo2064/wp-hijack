@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wp-hijack"
-version = "1.0.0"
+version = "1.0.1"
 description = "Advanced WordPress Vulnerability Scanner with AI-powered exploit generation"
 authors = [{ name = "KDO || Xpert Exploit", email = "kdo2064@github.com" }]
 license = { text = "MIT" }

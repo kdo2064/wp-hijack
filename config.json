@@ -1,7 +1,7 @@
 {
   "tool": {
     "name": "wp-Hijack",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "author": "KDO || Xpert Exploit",
     "github": "github.com/kdo2064/wp-Hijack"
   },
@@ -55,5 +55,12 @@
     "html_enabled": true,
     "json_enabled": true,
     "markdown_enabled": false
+  },
+  "agent": {
+    "max_steps": 30,
+    "tool_timeout": 120,
+    "python_exploit_timeout": 45,
+    "max_output_chars": 3000,
+    "allowed_tools": ["nmap", "whatweb", "nikto", "gobuster", "ffuf", "wpscan", "curl", "sqlmap", "hydra"]
   }
 }

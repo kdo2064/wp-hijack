@@ -6,8 +6,16 @@ github.com/kdo2064/wp-Hijack
 
 
 
-__version__ = "1.0.0"
+
+
+
+
+__version__ = "1.0.1"
+
+
 
 __author__  = "KDO || Xpert Exploit"
+
+
 
 __github__  = "github.com/kdo2064/wp-Hijack"

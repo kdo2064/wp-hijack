@@ -297,6 +297,32 @@ async def run_tools_parallel(
     return list(await asyncio.gather(*(_one(t) for t in tools)))
 
 
+async def run_tools_streaming(
+    tools: list[dict],
+    on_complete,
+    default_timeout: int = 120,
+) -> list[tuple[dict, ToolResult]]:
+    """
+    Run tools concurrently like run_tools_parallel, but call ``on_complete``
+    as soon as each individual tool finishes — without waiting for the rest.
+
+    ``on_complete`` signature:  async def on_complete(spec: dict, result: ToolResult)
+
+    Returns a list of (spec, ToolResult) pairs in completion order.
+    """
+    async def _one(item: dict) -> tuple[dict, ToolResult]:
+        name = item["name"]
+        args_str = item.get("args_str", "")
+        timeout = item.get("timeout", get_tool_timeout(name, default_timeout))
+        result = await run_tool(name, args_str, timeout=timeout)
+        await on_complete(item, result)
+        return item, result
+
+    # asyncio.as_completed fires the callback inside _one as each coroutine ends
+    tasks = [asyncio.create_task(_one(t)) for t in tools]
+    return [await t for t in asyncio.as_completed(tasks)]
+
+
 # ── Error Classification ──────────────────────────────────────────────────── #
 
 _TIMEOUT_KW = ("timeout", "timed out", "time limit", "deadline exceeded", "took too long")

@@ -37,6 +37,8 @@ from rich.text import Text
 
 from ..ai.client import ask_stream as ai_ask_stream
 
+from .memory import AgentMemory
+
 from .prompts import AgentAction, build_agent_system_prompt, parse_agent_response
 
 from .session import AgentSession, AgentStep
@@ -49,6 +51,7 @@ from .tool_runner import (
     run_python_exploit,
     run_tool,
     run_tools_parallel,
+    run_tools_streaming,
 )
 
 from .tools import available_tools_block, check_available
@@ -164,6 +167,9 @@ class AutonomousAgent:
         self._error_buffer: list[ErrorContext] = []
 
         self._seen_commands: set[str] = set()   # "tool:args" dedupe
+
+        # Session memory — persists discoveries across every step
+        self.memory: AgentMemory = AgentMemory(target=target)
 
 
 
@@ -525,7 +531,8 @@ class AutonomousAgent:
 
                 step.result = result
 
-
+                # Update memory with this tool's output
+                self.memory.update_from_tool(tool_name, result.stdout or "")
 
                 # Error observer: classify and buffer any failure
 
@@ -545,7 +552,8 @@ class AutonomousAgent:
 
                     f"[duration: {result.duration:.1f}s]\n\n{output_summary}\n\n"
 
-                    "What is your next action? Respond with a valid JSON action object."
+                    + self.memory.to_context_block()
+                    + "\n\nWhat is your next action? Respond with a valid JSON action object."
 
                 )
 
@@ -569,28 +577,6 @@ class AutonomousAgent:
 
             else:
 
-                console.print(
-
-                    Panel(
-
-                        "\n".join(
-
-                            f"  [bold green]$ {t.get('tool', '?')} {t.get('args', '')}[/]  —  {t.get('purpose', '')}"
-
-                            for t in raw_tools
-
-                        ),
-
-                        title=f"[bold #00FF87]Parallel Run — {len(raw_tools)} tools[/]",
-
-                        border_style="#00FF87",
-
-                        padding=(0, 1),
-
-                    )
-
-                )
-
                 tool_specs = [
 
                     {
@@ -609,23 +595,71 @@ class AutonomousAgent:
 
                 ]
 
-                results = await run_tools_parallel(tool_specs, default_timeout=self.tool_timeout)
+                # Show launch banner — all tools fire at once
 
-                tagged = [
+                console.print(
 
-                    (spec["name"], spec["purpose"], results[i])
+                    Panel(
 
-                    for i, spec in enumerate(tool_specs)
+                        "\n".join(
 
-                ]
+                            f"  [bold green]$ {s['name']} {s['args_str']}[/]  \u2014  {s['purpose']}"
 
-                self._print_parallel_results(tagged)
+                            for s in tool_specs
+
+                        ),
+
+                        title=f"[bold #00FF87]\u25b6 Parallel Launch \u2014 {len(tool_specs)} tools running concurrently[/]",
+
+                        border_style="#00FF87",
+
+                        padding=(0, 1),
+
+                    )
+
+                )
 
 
 
-                # Error observer: classify each parallel result
+                streaming_results: list[tuple[dict, ToolResult]] = []
 
-                for spec, res in zip(tool_specs, results):
+
+
+                # Fires the instant each individual tool completes
+
+                async def _on_tool_done(spec: dict, res: ToolResult) -> None:
+
+                    output = res.combined_output(self.max_output_chars)
+
+                    colour = "green" if res.returncode == 0 else "yellow"
+
+                    status = (
+
+                        "[bold red]TIMEOUT[/]" if res.timed_out
+
+                        else f"[{colour}]exit {res.returncode}[/{colour}]"
+
+                    )
+
+                    # Print this tool's result immediately — others still running
+
+                    console.print(
+
+                        Panel(
+
+                            Text(output, overflow="fold"),
+
+                            title=f"[bold]\u2713 {spec['name']}[/] \u2014 {status} ({res.duration:.1f}s)",
+
+                            subtitle=f"Purpose: {spec['purpose']}",
+
+                            border_style=colour,
+
+                            padding=(0, 1),
+
+                        )
+
+                    )
 
                     err_ctx = classify_tool_error(res, args=spec.get("args_str", ""))
 
@@ -633,15 +667,33 @@ class AutonomousAgent:
 
                         self._error_buffer.append(err_ctx)
 
+                    # Update memory with each parallel tool's output
+                    self.memory.update_from_tool(spec["name"], res.stdout or "")
+                    streaming_results.append((spec, res))
 
+
+
+                await run_tools_streaming(
+
+                    tool_specs,
+
+                    on_complete=_on_tool_done,
+
+                    default_timeout=self.tool_timeout,
+
+                )
+
+
+
+                # Build combined feedback for AI in completion order
 
                 combined = []
 
-                for t_name, t_purpose, res in tagged:
+                for spec, res in streaming_results:
 
                     combined.append(
 
-                        f"[Tool: {t_name}] [exit: {res.returncode}] [duration: {res.duration:.1f}s]\n"
+                        f"[Tool: {spec['name']}] [exit: {res.returncode}] [duration: {res.duration:.1f}s]\n"
 
                         + res.combined_output(self.max_output_chars)
 
@@ -649,10 +701,11 @@ class AutonomousAgent:
 
                 feedback = (
 
-                    f"Parallel results ({len(combined)} tools):\n\n"
+                    f"Parallel results ({len(combined)} tools, shown as each completed):\n\n"
 
                     + "\n\n---\n\n".join(combined)
 
+                    + "\n\n" + self.memory.to_context_block()
                     + "\n\nWhat is your next action? Respond with a valid JSON action object."
 
                 )

@@ -3666,7 +3666,21 @@ def pwn(
 
 
 
+        # ── Auto-launch post-pwn interactive chat ──────────────────────────
 
+        from .agent.post_chat import AgentPostChat
+
+        post_chat = AgentPostChat(
+
+            session=session,
+
+            memory=agent.memory,
+
+            ai_cfg=cfg["ai"],
+
+        )
+
+        await post_chat.run()
 
 
 

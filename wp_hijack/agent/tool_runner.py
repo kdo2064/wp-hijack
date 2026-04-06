@@ -125,6 +125,24 @@ def _is_safe(args_str: str) -> tuple[bool, str]:
     return True, ""
 
 
+# Per-tool timeouts (seconds).  Slow scanners get extra time.
+_TOOL_TIMEOUTS: dict[str, int] = {
+    "nmap":      90,
+    "whatweb":   30,
+    "nikto":    300,
+    "gobuster":  90,
+    "ffuf":      90,
+    "wpscan":   300,
+    "curl":      20,
+    "sqlmap":   180,
+    "hydra":    180,
+    "python":    60,
+}
+
+
+def get_tool_timeout(name: str, default: int = 120) -> int:
+    """Return the configured timeout for *name*, falling back to *default*."""
+    return _TOOL_TIMEOUTS.get(name.lower(), default)
 
 
 
@@ -255,6 +273,149 @@ async def run_tool(
 
 
 
+
+
+async def run_tools_parallel(
+    tools: list[dict],
+    default_timeout: int = 120,
+) -> list[ToolResult]:
+    """
+    Run multiple (tool, args) pairs concurrently and return a list of
+    ToolResult in the same order.
+
+    Each element of *tools* must be a dict with keys:
+        name      — binary name
+        args_str  — argument string
+        timeout   — (optional) per-tool override in seconds
+    """
+    async def _one(item: dict) -> ToolResult:
+        name = item["name"]
+        args_str = item.get("args_str", "")
+        timeout = item.get("timeout", get_tool_timeout(name, default_timeout))
+        return await run_tool(name, args_str, timeout=timeout)
+
+    return list(await asyncio.gather(*(_one(t) for t in tools)))
+
+
+# ── Error Classification ──────────────────────────────────────────────────── #
+
+_TIMEOUT_KW = ("timeout", "timed out", "time limit", "deadline exceeded", "took too long")
+_NETWORK_KW = (
+    "connection refused", "no route to host", "name or service not known",
+    "could not connect", "failed to connect", "network unreachable",
+    "errno 111", "errno 101", "host unreachable",
+)
+_AUTH_KW    = ("permission denied", "authentication failed", "forbidden", "401", "403 forbidden")
+_NOTFOUND_KW = ("not found", "no such file", "command not found", "127", "binary", "error 404")
+
+
+@dataclass
+class ErrorContext:
+    """Structured failure description injected into the AI error-observer prompt."""
+    error_type:  str    # TIMEOUT | NETWORK | AUTH | NOT_FOUND | CRASH | EMPTY
+    tool:        str
+    args:        str
+    suggestion:  str    # actionable fix hint for the AI
+    raw_snippet: str    # first ~300 chars of stderr for context
+
+
+def classify_tool_error(result: ToolResult, args: str = "") -> "ErrorContext | None":
+    """
+    Analyse a ToolResult.
+    Returns an ErrorContext when an actionable problem is detected, else None.
+    """
+    # Genuine success — output present, no timeout, clean exit
+    if result.returncode == 0 and not result.timed_out and result.stdout.strip():
+        return None
+
+    combined = (result.stdout + " " + result.stderr).lower()
+    snippet  = (result.stderr[:200] + result.stdout[:100]).strip()
+
+    if result.timed_out or any(k in combined for k in _TIMEOUT_KW):
+        # Give a flag-specific hint where possible
+        hints: dict[str, str] = {
+            "nmap":     "Use fewer ports (-p 80,443,22) and add -T4 --max-retries 1",
+            "wpscan":   "Add --max-scan-duration 60 and reduce enumerate flags (use vp only)",
+            "whatweb":  "Switch to -a 1 and add --timeout 8",
+            "nikto":    "Add -maxtime 90 and -Tuning 123",
+            "gobuster":  "Reduce -t threads to 10 and add --timeout 8s",
+            "sqlmap":   "Add --timeout 10 --retries 1 --level 1 --risk 1",
+            "hydra":    "Reduce -t to 4 and add -W 3",
+        }
+        extra = hints.get(result.tool, "Try adding a shorter timeout flag or reducing scan scope")
+        return ErrorContext(
+            error_type="TIMEOUT",
+            tool=result.tool,
+            args=args,
+            suggestion=(
+                f"'{result.tool}' hit the time limit. {extra}. "
+                "Alternatively use run_python with requests for a lightweight probe."
+            ),
+            raw_snippet=snippet,
+        )
+
+    if any(k in combined for k in _NOTFOUND_KW):
+        return ErrorContext(
+            error_type="NOT_FOUND",
+            tool=result.tool,
+            args=args,
+            suggestion=(
+                f"'{result.tool}' binary not found or target path returned 404. "
+                "Skip this tool or replace with run_python (requests/urllib)."
+            ),
+            raw_snippet=snippet,
+        )
+
+    if any(k in combined for k in _NETWORK_KW):
+        return ErrorContext(
+            error_type="NETWORK",
+            tool=result.tool,
+            args=args,
+            suggestion=(
+                f"'{result.tool}' hit a network error. "
+                "Try HTTPS instead of HTTP, verify the target is reachable with curl first, "
+                "or try a Python requests probe."
+            ),
+            raw_snippet=snippet,
+        )
+
+    if any(k in combined for k in _AUTH_KW):
+        return ErrorContext(
+            error_type="AUTH",
+            tool=result.tool,
+            args=args,
+            suggestion=(
+                f"'{result.tool}' received an auth/permission error. "
+                "Try unauthenticated paths, REST API, or xmlrpc.php instead."
+            ),
+            raw_snippet=snippet,
+        )
+
+    if not result.stdout.strip():
+        return ErrorContext(
+            error_type="EMPTY",
+            tool=result.tool,
+            args=args,
+            suggestion=(
+                f"'{result.tool}' produced no output (exit {result.returncode}). "
+                "Check the args are correct; try run_python for manual verification."
+            ),
+            raw_snippet=snippet,
+        )
+
+    if result.returncode not in (0, None):
+        return ErrorContext(
+            error_type="CRASH",
+            tool=result.tool,
+            args=args,
+            suggestion=(
+                f"'{result.tool}' crashed (exit {result.returncode}). "
+                "Review the args for syntax errors or unsupported flags."
+            ),
+            raw_snippet=snippet,
+        )
+
+    return None
 
 
 async def run_python_exploit(

@@ -38,6 +38,10 @@ class AgentAction:
 
     purpose: str = ""
 
+    # parallel action — list of {tool, args, purpose}
+
+    tools: list = None
+
                        
 
     code: str = ""
@@ -46,7 +50,7 @@ class AgentAction:
 
     summary: str = ""
 
-    findings: list[dict] = None                            
+    findings: list = None                            
 
 
 
@@ -55,6 +59,10 @@ class AgentAction:
         if self.findings is None:
 
             self.findings = []
+
+        if self.tools is None:
+
+            self.tools = []
 
 
 
@@ -76,7 +84,7 @@ Work step by step. Each response MUST be a single JSON object — no prose outsi
 
 ## ACTION SCHEMAS
 
-### 1. Run an external tool
+### 1. Run a single external tool
 ```json
 {{
   "action": "run_tool",
@@ -87,7 +95,21 @@ Work step by step. Each response MUST be a single JSON object — no prose outsi
 }}
 ```
 
-### 2. Run custom Python exploit code
+### 2. Run MULTIPLE tools in parallel (PREFERRED for recon)
+```json
+{{
+  "action": "run_tools_parallel",
+  "thought": "<reasoning — why these tools together>",
+  "tools": [
+    {{"tool": "nmap",    "args": "-sV -p 21,22,80,443,8080,8443 --open -T4 <target>", "purpose": "port scan"}},
+    {{"tool": "curl",    "args": "-sIL --max-time 10 http://<target>",                 "purpose": "http headers"}},
+    {{"tool": "wpscan", "args": "--url http://<target> --enumerate vp,u --no-banner --max-scan-duration 120", "purpose": "wp enum"}}
+  ]
+}}
+```
+Use this action whenever you can run 2+ independent tools at the same time.
+
+### 3. Run custom Python exploit code
 ```json
 {{
   "action": "run_python",
@@ -97,7 +119,7 @@ Work step by step. Each response MUST be a single JSON object — no prose outsi
 }}
 ```
 
-### 3. Finish and report findings
+### 4. Finish and report findings
 ```json
 {{
   "action": "done",
@@ -115,30 +137,48 @@ Work step by step. Each response MUST be a single JSON object — no prose outsi
 }}
 ```
 
-## RULES
-1. Always start with nmap port scan, then whatweb, then wpscan (if WordPress detected).
-2. After recon, run nikto for web vulns, then enumerate further based on results.
-3. If wpscan finds vulnerable plugins/themes, generate Python exploit code to confirm.
-4. If login page found, try hydra with common credentials only after getting confirmation.
-5. NEVER run: rm -rf, shutdown, format, del /f/s, dd if=, mkfs, fork bombs.
-6. Truncate tool args to one logical command — no chaining with && or | to shell.
-7. Stop and report `done` if: all recon completed + exploits attempted + {max_steps} steps reached.
-8. Be specific in args — always include the target URL/IP in every command.
-9. If a tool returns an error or is missing, note it in thought and try another approach.
-10. Keep Python exploit code self-contained with all imports included.
+## COMMAND GENERATION RULES
+Your commands MUST be DYNAMIC — built from what you know about this specific target.
+Never use hardcoded example commands verbatim. Reason from context and adapt every flag.
+
+• Batch independent tools with run_tools_parallel to save steps.
+• Use scoped/fast flags by default:
+    nmap     → -sV -p 80,443,22,21,8080 --open -T4 --max-retries 1
+    wpscan   → --enumerate vp,vt,u --no-banner --max-scan-duration 90
+    whatweb  → -a 1 --timeout 8
+    curl     → -sIL --max-time 10
+    gobuster → -t 10 --timeout 8s -q
+    sqlmap   → --batch --level 1 --risk 1 --timeout 10
+• Include the full target URL/host in every command.
+• Do NOT chain commands with && or | — one command per tool entry.
+• Keep Python exploits self-contained (all imports at top).
+• Never run: rm -rf, shutdown, format, del /f/s, dd if=, mkfs, fork bombs.
+• Stop and report `done` when recon + exploits done or {max_steps} steps used.
+
+## ERROR RECOVERY PROTOCOL
+When you see an ⚠️  ERROR OBSERVER block in the user message:
+  1. READ each error entry — type (TIMEOUT/NETWORK/AUTH/NOT_FOUND/CRASH) and the suggestion.
+  2. DO NOT repeat the exact same args that already failed.
+  3. Generate NEW commands that directly address the failure:
+       TIMEOUT   → reduce scope, add --max-time/--max-scan-duration, or use run_python
+       NETWORK   → try HTTPS vs HTTP, verify with curl first
+       NOT_FOUND → skip binary, use run_python with requests
+       AUTH      → probe unauthenticated paths, wp-json, xmlrpc.php
+       CRASH     → check arg syntax, simplify flags, or rewrite as Python
+  4. Explain your fix in the "thought" field.
 
 ## EXPLOITATION PRIORITY
 CRITICAL > HIGH > MEDIUM > LOW
 
-Focus on WordPress-specific vectors first:
-- Vulnerable plugins/themes (wpscan --enumerate vp,vt)
-- Unauthenticated REST API exposure
-- xmlrpc.php brute-force / amplification
-- File inclusion / upload vulnerabilities
-- SQL injection via vulnerable plugins
-- Login bruteforce (only if explicitly vulnerable auth found)
+WordPress attack surface — check in order of impact:
+  1. Vulnerable plugins/themes (wpscan --enumerate vp,vt)
+  2. Unauthenticated REST API — /wp-json/wp/v2/users user enumeration
+  3. xmlrpc.php — brute-force / system.multicall amplification
+  4. Arbitrary file upload via vulnerable plugin
+  5. SQL injection via plugin query params
+  6. Login bruteforce — ONLY after auth vector confirmed
 
-Begin your assessment now. Start with nmap.
+Begin assessment now. Your first action should batch ALL initial recon tools together.
 """
 
 
@@ -252,7 +292,7 @@ def parse_agent_response(text: str) -> AgentAction | None:
 
     action = data.get("action", "")
 
-    if action not in ("run_tool", "run_python", "done"):
+    if action not in ("run_tool", "run_tools_parallel", "run_python", "done"):
 
         return None
 
@@ -269,6 +309,8 @@ def parse_agent_response(text: str) -> AgentAction | None:
         args=data.get("args", ""),
 
         purpose=data.get("purpose", ""),
+
+        tools=data.get("tools", []),
 
         code=data.get("code", ""),
 

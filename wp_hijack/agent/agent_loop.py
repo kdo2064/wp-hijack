@@ -41,7 +41,15 @@ from .prompts import AgentAction, build_agent_system_prompt, parse_agent_respons
 
 from .session import AgentSession, AgentStep
 
-from .tool_runner import ToolResult, run_python_exploit, run_tool
+from .tool_runner import (
+    ErrorContext,
+    ToolResult,
+    classify_tool_error,
+    get_tool_timeout,
+    run_python_exploit,
+    run_tool,
+    run_tools_parallel,
+)
 
 from .tools import available_tools_block, check_available
 
@@ -151,6 +159,12 @@ class AutonomousAgent:
 
         self._session: AgentSession | None = None
 
+        # Error observer state
+
+        self._error_buffer: list[ErrorContext] = []
+
+        self._seen_commands: set[str] = set()   # "tool:args" dedupe
+
 
 
                                                                                 
@@ -243,6 +257,44 @@ class AutonomousAgent:
 
 
 
+    def _print_parallel_results(self, results: list[tuple[str, str, ToolResult]]) -> None:
+
+        """Pretty-print results from a parallel tool batch."""
+
+        for tool_name, purpose, result in results:
+
+            output = result.combined_output(self.max_output_chars)
+
+            colour = "green" if result.returncode == 0 else "yellow"
+
+            status = (
+
+                "[bold red]TIMEOUT[/]" if result.timed_out
+
+                else f"[{colour}]exit {result.returncode}[/{colour}]"
+
+            )
+
+            console.print(
+
+                Panel(
+
+                    Text(output, overflow="fold"),
+
+                    title=f"[bold]{tool_name}[/] — {status} ({result.duration:.1f}s)",
+
+                    subtitle=f"Purpose: {purpose}",
+
+                    border_style=colour,
+
+                    padding=(0, 1),
+
+                )
+
+            )
+
+
+
     def _print_findings(self, findings: list[dict]) -> None:
 
         if not findings:
@@ -292,6 +344,62 @@ class AutonomousAgent:
                 )
 
             )
+
+
+
+    def _build_error_hint(self) -> str:
+
+        """
+
+        Build a formatted error-observer block from accumulated failures.
+
+        Returns an empty string when there are no errors to report.
+
+        Clears the buffer after building.
+
+        """
+
+        if not self._error_buffer:
+
+            return ""
+
+
+
+        lines: list[str] = [
+
+            "\n\n⚠️  ERROR OBSERVER — Fix these before continuing:\n"
+
+        ]
+
+        for ec in self._error_buffer:
+
+            lines.append(f"  • [{ec.error_type}] {ec.tool} {ec.args!r}")
+
+            lines.append(f"    ↳ {ec.suggestion}")
+
+            if ec.raw_snippet:
+
+                snippet = ec.raw_snippet[:120].replace("\n", " ")
+
+                lines.append(f"    raw: {snippet}")
+
+            lines.append("")
+
+
+
+        lines.append(
+
+            "Generate NEW commands that fix the above issues. "
+
+            "Do NOT repeat the exact same args that failed. "
+
+            "Respond with a valid JSON action object."
+
+        )
+
+        self._error_buffer.clear()
+
+        return "\n".join(lines)
 
 
 
@@ -361,9 +469,23 @@ class AutonomousAgent:
 
 
 
-                                              
+            # Duplicate-command guard — warn AI instead of blindly re-running
 
-            if tool_name not in self.allowed_tools and tool_name != "python":
+            cmd_key = f"{tool_name}:{action.args}"
+
+            if cmd_key in self._seen_commands:
+
+                feedback = (
+
+                    f"[DUPLICATE] You already ran '{tool_name} {action.args}' in a previous step. "
+
+                    "Modify the arguments to fix the previous error or choose a different tool. "
+
+                    "Respond with a valid JSON action object."
+
+                )
+
+            elif tool_name not in self.allowed_tools and tool_name != "python":
 
                 result = ToolResult(
 
@@ -375,33 +497,165 @@ class AutonomousAgent:
 
                 )
 
+                step.result = result
+
+                feedback = (
+
+                    f"[BLOCKED] Tool '{tool_name}' is not in the allowed_tools list. "
+
+                    "Use only the listed tools. Respond with a valid JSON action object."
+
+                )
+
             else:
+
+                self._seen_commands.add(cmd_key)
 
                 self._print_tool_call(tool_name, action.args, action.purpose)
 
+                per_tool_timeout = get_tool_timeout(tool_name, self.tool_timeout)
+
                 result = await run_tool(
 
-                    tool_name, action.args, timeout=self.tool_timeout
+                    tool_name, action.args, timeout=per_tool_timeout
 
                 )
 
                 self._print_result(result)
 
+                step.result = result
 
 
-            step.result = result
 
-            output_summary = result.combined_output(self.max_output_chars)
+                # Error observer: classify and buffer any failure
 
-            feedback = (
+                err_ctx = classify_tool_error(result, args=action.args)
 
-                f"[Tool: {tool_name}] [exit: {result.returncode}] "
+                if err_ctx:
 
-                f"[duration: {result.duration:.1f}s]\n\n{output_summary}\n\n"
+                    self._error_buffer.append(err_ctx)
 
-                "What is your next action? Respond with a valid JSON action object."
 
-            )
+
+                output_summary = result.combined_output(self.max_output_chars)
+
+                feedback = (
+
+                    f"[Tool: {tool_name}] [exit: {result.returncode}] "
+
+                    f"[duration: {result.duration:.1f}s]\n\n{output_summary}\n\n"
+
+                    "What is your next action? Respond with a valid JSON action object."
+
+                )
+
+                return step, feedback
+
+
+
+        elif action.action == "run_tools_parallel":
+
+            raw_tools: list[dict] = getattr(action, "tools", []) or []
+
+            if not raw_tools:
+
+                feedback = (
+
+                    "[ERROR] run_tools_parallel requires a non-empty 'tools' list. "
+
+                    "Respond with a valid JSON action object."
+
+                )
+
+            else:
+
+                console.print(
+
+                    Panel(
+
+                        "\n".join(
+
+                            f"  [bold green]$ {t.get('tool', '?')} {t.get('args', '')}[/]  —  {t.get('purpose', '')}"
+
+                            for t in raw_tools
+
+                        ),
+
+                        title=f"[bold #00FF87]Parallel Run — {len(raw_tools)} tools[/]",
+
+                        border_style="#00FF87",
+
+                        padding=(0, 1),
+
+                    )
+
+                )
+
+                tool_specs = [
+
+                    {
+
+                        "name": t.get("tool", "").strip().lower(),
+
+                        "args_str": t.get("args", ""),
+
+                        "purpose": t.get("purpose", ""),
+
+                    }
+
+                    for t in raw_tools
+
+                    if t.get("tool", "").strip().lower() in self.allowed_tools
+
+                ]
+
+                results = await run_tools_parallel(tool_specs, default_timeout=self.tool_timeout)
+
+                tagged = [
+
+                    (spec["name"], spec["purpose"], results[i])
+
+                    for i, spec in enumerate(tool_specs)
+
+                ]
+
+                self._print_parallel_results(tagged)
+
+
+
+                # Error observer: classify each parallel result
+
+                for spec, res in zip(tool_specs, results):
+
+                    err_ctx = classify_tool_error(res, args=spec.get("args_str", ""))
+
+                    if err_ctx:
+
+                        self._error_buffer.append(err_ctx)
+
+
+
+                combined = []
+
+                for t_name, t_purpose, res in tagged:
+
+                    combined.append(
+
+                        f"[Tool: {t_name}] [exit: {res.returncode}] [duration: {res.duration:.1f}s]\n"
+
+                        + res.combined_output(self.max_output_chars)
+
+                    )
+
+                feedback = (
+
+                    f"Parallel results ({len(combined)} tools):\n\n"
+
+                    + "\n\n---\n\n".join(combined)
+
+                    + "\n\nWhat is your next action? Respond with a valid JSON action object."
+
+                )
 
 
 
@@ -501,7 +755,12 @@ class AutonomousAgent:
 
         self._system_prompt = system_prompt
 
-        self._history = []                                                      
+        self._history = []
+
+        self._error_buffer = []
+
+        self._seen_commands = set()
+
 
 
 
@@ -511,7 +770,9 @@ class AutonomousAgent:
 
             f"Begin autonomous security assessment of target: {self.target}\n"
 
-            f"Start with an nmap scan. Respond with a valid JSON action object."
+            f"Dynamically decide what tools to run first based on the target. "
+
+            f"Batch independent recon tools in a single run_tools_parallel call."
 
         )
 
@@ -636,6 +897,16 @@ class AutonomousAgent:
             agent_step, next_message = await self._execute_action(action, step_idx)
 
             session.add_step(agent_step)
+
+
+
+            # Append error-observer hint to the next AI message when failures occurred
+
+            error_hint = self._build_error_hint()
+
+            if error_hint:
+
+                next_message = next_message + error_hint
 
             step_idx += 1
 

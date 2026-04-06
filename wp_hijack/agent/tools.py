@@ -51,7 +51,7 @@ TOOL_REGISTRY: dict[str, ToolMeta] = {
 
         "usage": "nmap [options] <target>",
 
-        "example": "nmap -sV -sC -p 1-1000 --open target.com",
+        "example": "nmap -sV -p 21,22,80,443,8080,8443 --open -T4 target.com",
 
         "platform_hint": "",
 
@@ -69,7 +69,7 @@ TOOL_REGISTRY: dict[str, ToolMeta] = {
 
         "usage": "whatweb [options] <url>",
 
-        "example": "whatweb -a 3 --log-brief=- http://target.com",
+        "example": "whatweb -a 1 --max-threads=4 --timeout=10 http://target.com",
 
         "platform_hint": "",
 
@@ -161,9 +161,9 @@ TOOL_REGISTRY: dict[str, ToolMeta] = {
 
             "wpscan --url http://target.com "
 
-            "--enumerate p,t,u --plugins-detection aggressive "
+            "--enumerate vp,vt,u --plugins-detection aggressive "
 
-            "--no-banner 2>&1"
+            "--no-banner --max-scan-duration 120 2>&1"
 
         ),
 

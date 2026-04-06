@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import sys
 from typing import Any
 
@@ -175,26 +176,85 @@ class AgentPostChat:
     # ── AI streaming response ─────────────────────────────────────────────── #
 
     async def _ai_respond(self, question: str) -> None:
-        """Stream the AI answer to the console."""
+        """Stream the AI answer to the console, stripping XML tool-call markup."""
         self._history.append({"role": "user", "content": question})
 
         full_reply = ""
+        pending = ""       # buffer for potential partial XML tags
+        suppressing = False  # True while inside a <ns:tag>...</ns:tag> block
+
+        # Regex patterns cached once
+        _open_pat = re.compile(r'<[A-Za-z][A-Za-z0-9]*:[A-Za-z_]')
+        _close_pat = re.compile(r'</[A-Za-z][A-Za-z0-9]*:[^>]+>')
+
+        def _flush_pending(buf: str, suppress: bool) -> tuple[str, str, bool]:
+            """Drains buf, returns (to_print, leftover, suppressing)."""
+            to_print = ""
+            while buf:
+                if suppress:
+                    m = _close_pat.search(buf)
+                    if m:
+                        buf = buf[m.end():]  # discard up through closing tag
+                        suppress = False
+                    else:
+                        buf = ""  # discard everything while suppressing
+                    break
+                else:
+                    m = _open_pat.search(buf)
+                    if not m:
+                        # No opener found — hold back only if '<' is at very end
+                        lt = buf.rfind('<')
+                        if lt >= 0 and lt == len(buf) - 1:
+                            to_print += buf[:lt]
+                            buf = buf[lt:]
+                        else:
+                            to_print += buf
+                            buf = ""
+                        break
+                    # Print safe text before the opener
+                    to_print += buf[:m.start()]
+                    buf = buf[m.start():]
+                    # Wait until we have a closing '>' before deciding
+                    gt = buf.find('>')
+                    if gt == -1:
+                        break  # incomplete tag — keep buffering
+                    tag = buf[:gt + 1]
+                    buf = buf[gt + 1:]
+                    if not tag.endswith('/>'):
+                        suppress = True  # block-level tag — suppress until close
+                    # else: self-closing — just drop it, don't suppress
+            return to_print, buf, suppress
+
         console.print()
         try:
             async for chunk in ask_stream(
                 prompt=question,
                 system=self._system,
-                history=self._history[:-1],  # exclude the message we just appended
+                history=self._history[:-1],
                 config=self.ai_cfg,
             ):
-                console.print(chunk, end="", markup=False)
                 full_reply += chunk
+                pending += chunk
+                safe, pending, suppressing = _flush_pending(pending, suppressing)
+                if safe:
+                    console.print(safe, end="", markup=False)
         except Exception as exc:
             console.print(f"\n[red]AI error: {exc}[/red]")
             return
 
+        # Flush any remaining buffer
+        if pending and not suppressing:
+            console.print(pending, end="", markup=False)
+
         console.print()  # newline after streaming
-        self._history.append({"role": "assistant", "content": full_reply})
+
+        # Store a cleaned version in history (strip any complete XML blocks)
+        clean = re.sub(
+            r'<[A-Za-z][A-Za-z0-9]*:[^>]*>.*?</[A-Za-z][A-Za-z0-9]*:[^>]*>',
+            '', full_reply, flags=re.DOTALL
+        )
+        clean = re.sub(r'</?[A-Za-z][A-Za-z0-9]*:[^>]*>', '', clean)
+        self._history.append({"role": "assistant", "content": clean.strip()})
 
     # ── main REPL ─────────────────────────────────────────────────────────── #
 
